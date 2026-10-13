@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Telefon nasiya kalkulyatori</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--tx:#14213d;--mut:#6b7280;--ac:#2563eb;--bd:#e5e7eb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f172a;--card:#1e293b;--tx:#f1f5f9;--mut:#94a3b8;--ac:#60a5fa;--bd:#334155}}
+:root[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--tx:#f1f5f9;--mut:#94a3b8;--ac:#60a5fa;--bd:#334155}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px}
+.w{max-width:560px;margin:0 auto}
+h1{font-size:1.3rem;margin:8px 0 14px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:.85rem;color:var(--mut);margin:0 0 6px}
+input{width:100%;font-size:1.1rem;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.r{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 6px;text-align:right;border-bottom:1px solid var(--bd);font-size:.95rem}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:500;font-size:.8rem}
+td.m{font-weight:700;color:var(--ac)}
+.p{width:64px;padding:6px;font-size:.9rem;text-align:right}
+.n{font-size:.78rem;color:var(--mut);margin:8px 0 0}
+.sc{overflow-x:auto}.ch{display:flex;gap:8px;margin-top:8px}.ch button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:.95rem}.ch button.on{background:var(--ac);color:#fff;border-color:var(--ac)}h2{font-size:1rem;margin:0 0 10px}select{width:100%;font-size:1.05rem;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}.sv{width:100%;margin-top:12px;padding:13px;border:0;border-radius:10px;background:var(--ac);color:#fff;font-size:1rem;font-weight:600}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>📱 Telefon nasiya kalkulyatori</h1>
+<div class="c">
+<div class="r">
+<div><label for="pr">Telefon narxi ($)</label><input id="pr" inputmode="numeric" placeholder="500"></div>
+<div><label for="dp">Boshlang'ich to'lov ($)</label><input id="dp" inputmode="numeric" placeholder="0"></div>
+</div>
+<div style="margin-top:10px"><label for="ex">Tan narxi ustiga qo'shiladigan summa ($)</label>
+<input id="ex" inputmode="numeric" value="20">
+<div class="ch"><button data-e="0">0$</button><button data-e="20">+20$</button><button data-e="30">+30$</button></div></div>
+</div>
+<div class="c sc">
+<table>
+<thead><tr><th>Muddat</th><th>Ustama %</th><th>Oyiga</th><th>Jami</th></tr></thead>
+<tbody id="tb"></tbody>
+</table>
+<p class="n">Ustama foizini jadvaldan o'zgartirishingiz mumkin. Hisob: (narx − boshlang'ich to'lov) + ustama.</p>
+</div>
+<div class="c sc">
+<h2>Taqqoslash: oylik to'lov</h2>
+<div class="r"><div><label for="a1">1-variant ustama ($)</label><input id="a1" inputmode="numeric" value="20"></div>
+<div><label for="a2">2-variant ustama ($)</label><input id="a2" inputmode="numeric" value="30"></div></div>
+<table style="margin-top:8px"><thead><tr><th>Muddat</th><th id="h1">+$20</th><th id="h2">+$30</th></tr></thead><tbody id="cb"></tbody></table>
+</div>
+<div class="c sc">
+<h2>Oyma-oy to'lov jadvali</h2>
+<label for="tm">Muddatni tanlang</label>
+<select id="tm"></select>
+<table style="margin-top:8px"><thead><tr><th>№</th><th>Sana</th><th>To'lov</th><th>Qoldiq</th></tr></thead><tbody id="sb"></tbody></table>
+<div id="er" style="color:#ef4444;font-size:.8rem;margin-top:8px"></div>
+<button id="cp" class="sv" style="background:var(--bg);color:var(--tx);border:1px solid var(--bd)">📋 Nusxa olish (matn)</button>
+<p class="n" id="sm"></p>
+</div>
+</div>
+<script>
+window.onerror=function(m,u,l){var e=document.getElementById('er');if(e)e.textContent='Xato: '+m+' ('+l+')'};
+var rates=[];rates[3]=20;rates[4]=25;rates[5]=30;rates[6]=35;for(var i=7;i<=12;i++)rates[i]=rates[i-1]+5;
+var tb=document.getElementById('tb'),pr=document.getElementById('pr'),dp=document.getElementById('dp'),exi=document.getElementById('ex'),a1=document.getElementById('a1'),a2=document.getElementById('a2'),cb=document.getElementById('cb');
+function num(v){return parseInt(String(v).replace(/\D/g,''))||0}
+function fmt(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')}
+function fmtInput(e){var v=num(e.target.value);e.target.value=v?fmt(v):'';render()}
+function render(){
+var price=num(pr.value),down=Math.min(num(dp.value),price),ex=num(exi.value),base=price+ex-down,h='';
+for(var m=3;m<=12;m++){
+var tot=base*(1+rates[m]/100),mo=tot/m;
+h+='<tr><td>'+m+' oy</td><td><input class="p" type="number" min="0" step="0.5" value="'+rates[m]+'" data-m="'+m+'"></td><td class="m">'+(price?'$'+fmt(mo):'—')+'</td><td>'+(price?'$'+fmt(tot+down):'—')+'</td></tr>';
+}
+var v1=num(a1.value),v2=num(a2.value),c='';
+document.getElementById('h1').textContent='+$'+v1;document.getElementById('h2').textContent='+$'+v2;
+for(var k=3;k<=12;k++){var f=function(x){return (price+x-down)*(1+rates[k]/100)/k};
+c+='<tr><td>'+k+' oy</td><td class="m">'+(price?'$'+fmt(f(v1)):'—')+'</td><td class="m">'+(price?'$'+fmt(f(v2)):'—')+'</td></tr>';}
+cb.innerHTML=c;sched(price,ex,down);
+var bs=document.querySelectorAll('.ch button');for(var j=0;j<bs.length;j++)bs[j].className=(num(bs[j].dataset.e)===ex)?'on':'';
+var act=document.activeElement,key=act&&act.dataset?act.dataset.m:null;
+tb.innerHTML=h;
+if(key){var el=tb.querySelector('[data-m="'+key+'"]');if(el){el.focus();var l=el.value.length;try{el.setSelectionRange(l,l)}catch(x){}}}
+}
+tb.addEventListener('input',function(e){if(e.target.dataset.m){rates[e.target.dataset.m]=parseFloat(e.target.value)||0;render()}});
+pr.addEventListener('input',fmtInput);dp.addEventListener('input',fmtInput);
+[exi,a1,a2].forEach(function(e){e.addEventListener('input',function(){e.value=num(e.value)||'';render()})});
+document.querySelector('.ch').addEventListener('click',function(e){if(e.target.dataset.e!==undefined){exi.value=e.target.dataset.e;render()}});
+
+var tm=document.getElementById('tm'),sb=document.getElementById('sb'),sm=document.getElementById('sm'),rows=[],dl=null;
+for(var q=3;q<=12;q++){var o=document.createElement('option');o.value=q;o.textContent=q+' oy';tm.appendChild(o)}
+tm.value=6;
+function dstr(d){return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear()}
+function sched(price,ex,down){
+var m=parseInt(tm.value),base=price+ex-down,tot=base*(1+rates[m]/100),mo=Math.round(tot/m),rem=tot,h='',now=new Date();rows=[];
+if(!price){sb.innerHTML='';sm.textContent='Telefon narxini kiriting.';return}
+if(down>0){rows.push(['0',dstr(now),down,tot]);h+='<tr><td>0</td><td>'+dstr(now)+'</td><td>$'+fmt(down)+'</td><td>$'+fmt(tot)+'</td></tr>'}
+for(var i=1;i<=m;i++){var p=(i===m)?rem:mo;rem=Math.max(0,rem-p);var d=new Date(now.getFullYear(),now.getMonth()+i,Math.min(now.getDate(),28));
+rows.push([i,dstr(d),p,rem]);h+='<tr><td>'+i+'</td><td>'+dstr(d)+'</td><td class="m">$'+fmt(p)+'</td><td>$'+fmt(rem)+'</td></tr>'}
+sb.innerHTML=h;sm.textContent='Jami: $'+fmt(tot+down)+' (ustama '+rates[m]+'%, tan narxiga +$'+ex+')';}
+tm.addEventListener('change',render);
+document.getElementById('cp').addEventListener('click',function(){
+var t='Nasiya jadvali ('+tm.value+' oy)\n';rows.forEach(function(r){t+=(r[0]==0?'Boshlang\'ich':r[0]+'-oy')+' | '+r[1]+' | $'+fmt(r[2])+' | qoldiq $'+fmt(r[3])+'\n'});
+var ok=false;try{var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();ok=document.execCommand('copy');document.body.removeChild(a)}catch(x){}
+if(!ok&&navigator.clipboard){navigator.clipboard.writeText(t).then(function(){sm.textContent='Nusxa olindi ✅'}).catch(function(){sm.textContent='Nusxa olib bo\'lmadi'});return}
+sm.textContent=ok?'Nusxa olindi ✅':'Nusxa olib bo\'lmadi'});
+render();
+</script>
+<style>
+body{padding-bottom:84px}
+#tgb{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--card,#fff);border-top:1px solid var(--bd,#e5e7eb);z-index:50}
+#tgb a,#tgb button{flex:1;text-align:center;padding:12px 6px;border:0;border-radius:10px;background:var(--ac,#2563eb);color:#fff;font-size:.88rem;font-weight:600;text-decoration:none;cursor:pointer;font-family:inherit}
+#tgb .g{background:var(--bg,#f5f7fb);color:var(--tx,#14213d);border:1px solid var(--bd,#e5e7eb)}
+#tgOv{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:60}
+#tgOv.on{display:flex}
+#tgBox{width:100%;max-width:560px;background:var(--card,#fff);color:var(--tx,#14213d);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+#tgBox input{margin-bottom:10px}
+#tgBox .b{width:100%;padding:13px;border:0;border-radius:10px;background:var(--ac,#2563eb);color:#fff;font-size:1rem;font-weight:600;margin-top:2px}
+#tgBox .x{background:transparent;color:var(--mut,#6b7280);margin-top:6px}
+#tgSum,#tgM{font-size:.9rem;margin:0 0 10px}
+</style>
+<div id="tgb">
+<a id="tgBot" target="_blank" rel="noopener">✈️ Telegram bot</a>
+<button id="tgOrd">🛒 Buyurtma</button>
+<button id="tgShr" class="g">📤 Ulashish</button>
+</div>
+<div id="tgOv"><div id="tgBox">
+<h2>🛒 Buyurtma berish</h2>
+<p id="tgSum"></p>
+<input id="tgN" placeholder="Ismingiz" autocomplete="name">
+<input id="tgP" placeholder="+998 90 123 45 67" inputmode="tel" autocomplete="tel">
+<p id="tgM"></p>
+<button class="b" id="tgS">Yuborish</button>
+<button class="b x" id="tgX">Yopish</button>
+</div></div>
+<script>
+(function(){
+var WORKER='https://SIZNING-WORKER.workers.dev'; // <-- worker manzilingiz
+var BOT='SizningBot_bot';                         // <-- bot username (@siz)
+var $=function(i){return document.getElementById(i)};
+$('tgBot').href='https://t.me/'+BOT;
+function calc(){
+ var r={price:0,months:0,monthly:0};
+ try{
+  r.price=num(pr.value);r.months=parseInt(tm.value);
+  var f=rows.filter(function(x){return x[0]==1})[0];r.monthly=f?Math.round(f[2]):0;
+ }catch(e){}
+ return r;
+}
+$('tgOrd').onclick=function(){
+ var c=calc();
+ $('tgSum').textContent=c.price?('$'+c.price+' · '+c.months+' oy · oyiga $'+c.monthly):'Avval telefon narxini kiriting (ixtiyoriy).';
+ $('tgM').textContent='';$('tgOv').className='on';
+};
+$('tgX').onclick=function(){$('tgOv').className=''};
+$('tgOv').onclick=function(e){if(e.target===this)this.className=''};
+$('tgS').onclick=function(){
+ var n=$('tgN').value.trim(),p=$('tgP').value.trim(),c=calc(),m=$('tgM'),b=this;
+ if(n.length<2||!/^[+\d\s()-]{7,}$/.test(p)){m.textContent='Ism va telefonni to\u2018g\u2018ri kiriting';return}
+ b.disabled=true;m.textContent='Yuborilmoqda...';
+ fetch(WORKER+'/order',{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({name:n,phone:p,price:c.price,months:c.months,monthly:c.monthly})})
+ .then(function(r){return r.json()})
+ .then(function(j){m.textContent=j.ok?'\u2705 Yuborildi! Tez orada bog\u2018lanamiz.':'\u274C '+(j.error||'Xatolik')})
+ .catch(function(){m.textContent='\u274C Aloqa xatosi'})
+ .then(function(){b.disabled=false});
+};
+$('tgShr').onclick=function(){
+ var c=calc(),t='\uD83D\uDCF1 Nasiya: $'+c.price+', '+c.months+' oy, oyiga $'+c.monthly;
+ if(navigator.share){navigator.share({text:t,url:location.href}).catch(function(){})}
+ else{window.open('https://t.me/share/url?url='+encodeURIComponent(location.href)+'&text='+encodeURIComponent(t))}
+};
+})();
+</script>
+</body>
+</html>
